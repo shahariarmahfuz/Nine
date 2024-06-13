@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glowing Scientific Calculator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="calculator" id="scientificCalculator">
+        <input type="text" id="display" disabled>
+        <br>
+        <button class="clear" onclick="clearDisplay()">C</button>
+        <button class="function" onclick="appendToDisplay('math.sqrt(')">√</button>
+        <button class="function" onclick="appendToDisplay('math.pow(')">x<sup>y</sup></button>
+        <button class="operator" onclick="appendToDisplay('/')">/</button>
+        <br>
+        <button class="number" onclick="appendToDisplay('7')">7</button>
+        <button class="number" onclick="appendToDisplay('8')">8</button>
+        <button class="number" onclick="appendToDisplay('9')">9</button>
+        <button class="operator" onclick="appendToDisplay('*')">*</button>
+        <br>
+        <button class="number" onclick="appendToDisplay('4')">4</button>
+        <button class="number" onclick="appendToDisplay('5')">5</button>
+        <button class="number" onclick="appendToDisplay('6')">6</button>
+        <button class="operator" onclick="appendToDisplay('-')">-</button>
+        <br>
+        <button class="number" onclick="appendToDisplay('1')">1</button>
+        <button class="number" onclick="appendToDisplay('2')">2</button>
+        <button class="number" onclick="appendToDisplay('3')">3</button>
+        <button class="operator" onclick="appendToDisplay('+')">+</button>
+        <br>
+        <button class="number" onclick="appendToDisplay('0')">0</button>
+        <button class="special" onclick="appendToDisplay('.')">.</button>
+        <button class="function" onclick="appendToDisplay('math.pi')">π</button>
+        <button class="special" onclick="calculate()">=</button>
+        <br>
+        <button class="function" onclick="appendToDisplay('math.sin(')">sin</button>
+        <button class="function" onclick="appendToDisplay('math.cos(')">cos</button>
+        <button class="function" onclick="appendToDisplay('math.tan(')">tan</button>
+        <button class="function" onclick="appendToDisplay('math.log10(')">log</button>
+        <button class="function" onclick="appendToDisplay('math.exp(')">exp</button>
+        <br>
+        <button class="function" onclick="showAgeCalculator()">Age</button>
+        <button class="function" onclick="appendToDisplay('math.pow(')">x<sup>y</sup></button>
+        <button class="function" onclick="appendToDisplay('**')">^</button>
+        <button class="edit" onclick="editDisplay()">Edit</button>
+        <button class="operator" onclick="appendToDisplay(')')">)</button>
+    </div>
+
+    <div id="ageCalculator" class="calculator" style="display: none;">
+        <input type="text" id="birthdate" placeholder="YYYY-MM-DD">
+        <br>
+        <button class="function" onclick="calculateAge()">Calculate Age</button>
+        <button class="clear" onclick="clearDisplay()">Clear</button>
+        <br>
+        <p id="ageResult"></p>
+    </div>
+
+    <button class="switch-button" onclick="toggleCalculator()">Switch Calculator</button>
+
+    <script>
+        function editDisplay() {
+            var display = document.getElementById('display');
+            display.removeAttribute('disabled');
+            display.focus();
+        }
+
+        function toggleCalculator() {
+            var ageCalculator = document.getElementById('ageCalculator');
+            var scientificCalculator = document.getElementById('scientificCalculator');
+
+            if (scientificCalculator.style.display === 'none') {
+                scientificCalculator.style.display = 'block';
+                ageCalculator.style.display = 'none';
+            } else {
+                scientificCalculator.style.display = 'none';
+                ageCalculator.style.display = 'block';
+            }
+        }
+
+        function appendToDisplay(value) {
+            var display = document.getElementById('display');
+            display.value += value;
+        }
+
+        function clearDisplay() {
+            var display = document.getElementById('display');
+            display.value = '';
+        }
+
+        function calculate() {
+            var display = document.getElementById('display');
+            fetch('/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'expression=' + encodeURIComponent(display.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                display.value = data.result;
+            });
+        }
+
+        function calculateAge() {
+            var birthdateInput = document.getElementById('birthdate');
+            fetch('/calculate_age', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'birthdate=' + encodeURIComponent(birthdateInput.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                var ageResult = document.getElementById('ageResult');
+                ageResult.textContent = data.result;
+            });
+        }
+
+        // Handle keyboard events for calculator
+        document.addEventListener('keydown', function(event) {
+            var key = event.key;
+            var display = document.getElementById('display');
+
+            // Allow digits, operators, parentheses, and specific keys
+            if (/[\d()+\-*/.^]|Enter|Backspace|Delete|Escape/.test(key)) {
+                if (key === 'Enter') {
+                    calculate();
+                } else if (key === 'Escape') {
+                    clearDisplay();
+                } else if (key === 'Backspace') {
+                    display.value = display.value.slice(0, -1);
+                } else if (key === 'Delete') {
+                    display.value = '';
+                } else {
+                    appendToDisplay(key);
+                }
+                event.preventDefault(); // Prevent default behavior for non-input keys
+            }
+        });
+    </script>
+</body>
+</html>
